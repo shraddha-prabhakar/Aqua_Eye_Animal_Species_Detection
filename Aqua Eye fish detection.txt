@@ -1,0 +1,34 @@
+Aqua Eye fish detection
+!git clone https://github.com/ultralytics/yolov5  # clone repo
+!pip install -U -r yolov5/requirements.txt  # install dependencies
+%cd /content/yolov5
+import torch
+from IPython.display import Image  # for displaying images
+#from utils.google_utils import gdrive_download  # for downloading models/datasets
+print('Using torch %s %s' % (torch.__version__, torch.cuda.get_device_properties(0) if torch.cuda.is_available() else 'CPU'))
+from google.colab import drive
+drive.mount('/content/gdrive')
+!ln -s /content/gdrive/My\ Drive/ /mydrive
+!cp /mydrive/Mini-Project/dataset.zip /content/
+!unzip /content/dataset.zip -d /content/yolov5/
+!cp /mydrive/Mini-Project/Yolov5/data.yaml /content/yolov5
+!cp /mydrive/Mini-Project/Yolov5/custom_yolov5.yaml /content/yolov5
+%cd /content/yolov5/
+!python train.py --img 416 --batch 80 --epochs 100 --data './data.yaml' --cfg ./custom_yolov5.yaml --weights ''
+# Start tensorboard
+# Launch after you have started training to all the graphs needed for inspection
+# logs save in the folder "runs"
+%load_ext tensorboard
+%tensorboard --logdir /content/yolov5/runs
+print("GROUND TRUTH TRAINING DATA:")
+Image(filename='/content/yolov5/runs/train/exp/val_batch0_labels.jpg', width=900)
+%cd /content/yolov5/
+!python detect.py --weights /content/yolov5/runs/train/exp/weights/best.pt --img 416 --conf 0.4 --source /content/yolov5/aquarium_pretrain/test/images
+import glob
+from IPython.display import Image, display
+
+for imageName in glob.glob('/content/yolov5/runs/detect/exp/*.jpg'):
+  display(Image(filename=imageName))
+  print('\n')
+%cp /content/yolov5/runs/train/exp/weights/best.pt /mydrive/Mini-Project/Yolov5/
+!python detect.py --weights /content/yolov5/runs/train/exp/weights/best.pt --img 416 --conf 0.4 --source /content/yolov5/aquarium_pretrain/test/images
